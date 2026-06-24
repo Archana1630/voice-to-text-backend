@@ -140,6 +140,12 @@ try {
 
 const PORT = process.env.PORT || 5000;
 
+
+app.get("/env-check", (req, res) => {
+  res.json({
+    hasKey: !!process.env.SARVAM_API_KEY,
+  });
+});
 app.listen(PORT, () => {
 
 console.log(
