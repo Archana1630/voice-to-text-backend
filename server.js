@@ -259,30 +259,12 @@ app.post(
 
 // IMPORTANT FOR APK CONNECTION
 
-app.listen(
+const PORT = process.env.PORT || 5000;
 
-  5000,
+app.listen(PORT, () => {
 
-  "0.0.0.0",
+  console.log(
+    `Server running on port ${PORT}`
+  );
 
-  ()=>{
-
-
-    console.log(
-      "Server running on port 5000"
-    );
-
-
-    console.log(
-      "Local: http://localhost:5000"
-    );
-
-
-    console.log(
-      "Mobile: http://192.168.1.4:5000"
-    );
-
-
-  }
-
-);
+});
