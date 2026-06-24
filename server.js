@@ -6,7 +6,7 @@ const fs = require("fs");
 const cors = require("cors");
 
 require("dotenv").config();
-require("dotenv").config();
+console.log("Restart test");
 
 console.log("=== STARTUP ENV CHECK ===");
 console.log("PORT:", process.env.PORT);
