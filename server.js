@@ -96,9 +96,14 @@ app.post(
         "Received file:",
         req.file.originalname
       );
+      console.log("API KEY EXISTS:", !!process.env.SARVAM_API_KEY);
+      console.log("Sending audio to Sarvam...");
 
 
-
+      console.log(
+  "API KEY EXISTS:",
+  !!process.env.SARVAM_API_KEY
+);
 
       if (!process.env.SARVAM_API_KEY) {
 
