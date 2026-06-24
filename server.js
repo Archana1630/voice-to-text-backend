@@ -6,6 +6,11 @@ const fs = require("fs");
 const cors = require("cors");
 
 require("dotenv").config();
+require("dotenv").config();
+
+console.log("=== STARTUP ENV CHECK ===");
+console.log("PORT:", process.env.PORT);
+console.log("HAS SARVAM KEY:", !!process.env.SARVAM_API_KEY);
 
 const app = express();
 
