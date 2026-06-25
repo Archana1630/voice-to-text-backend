@@ -10,15 +10,22 @@ require("dotenv").config();
 const app = express();
 
 app.use(cors());
-
 app.use(express.json());
+
+
+// IST Time Function
+function getISTTime() {
+  return new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata"
+  });
+}
 
 
 // Request Logger
 app.use((req, res, next) => {
 
   console.log(
-    `\n[${new Date().toLocaleString()}] REQUEST: ${req.method} ${req.url}`
+    `\n[${getISTTime()}] REQUEST: ${req.method} ${req.url}`
   );
 
   next();
@@ -62,7 +69,7 @@ app.post(
     try {
 
       console.log(
-        `[${new Date().toLocaleString()}] Speech request received`
+        `[${getISTTime()}] Speech request received`
       );
 
       if (!req.file) {
@@ -103,7 +110,7 @@ app.post(
       );
 
       console.log(
-        `[${new Date().toLocaleString()}] Sending audio to Sarvam API...`
+        `[${getISTTime()}] Sending audio to Sarvam API...`
       );
 
       const response = await axios.post(
@@ -120,7 +127,7 @@ app.post(
       );
 
       console.log(
-        `[${new Date().toLocaleString()}] Sarvam Response:`
+        `[${getISTTime()}] Sarvam Response:`
       );
 
       console.log(response.data);
@@ -134,7 +141,7 @@ app.post(
     catch (error) {
 
       console.log(
-        `[${new Date().toLocaleString()}] ERROR:`
+        `[${getISTTime()}] ERROR:`
       );
 
       console.log(
@@ -180,7 +187,7 @@ app.listen(
   () => {
 
     console.log(
-      `[${new Date().toLocaleString()}] Server running on port ${PORT}`
+      `[${getISTTime()}] Server running on port ${PORT}`
     );
 
   }
