@@ -7,70 +7,92 @@ const cors = require("cors");
 
 require("dotenv").config();
 
-console.log("Restart test");
-
-console.log("=== STARTUP ENV CHECK ===");
-console.log("PORT:", process.env.PORT);
-console.log("HAS SARVAM KEY:", !!process.env.SARVAM_API_KEY);
-
-
 const app = express();
 
 
 app.use(cors());
+
 app.use(express.json());
 
 
+// request logger
+app.use((req,res,next)=>{
+
+console.log(
+"REQUEST:",
+req.method,
+req.url
+);
+
+next();
+
+});
+
+
+
 const upload = multer({
-  dest: "uploads/"
-});
 
-
-// Home test
-app.get("/", (req, res) => {
-
-  res.send("Backend is running");
-
-});
-
-
-// Connection test
-app.get("/test", (req, res) => {
-
-  console.log("TEST REQUEST RECEIVED");
-
-  res.json({
-    message: "Backend Connected Successfully"
-  });
-
-});
-
-
-// Environment check
-app.get("/env-check", (req, res) => {
-
-  res.json({
-
-    hasKey: !!process.env.SARVAM_API_KEY
-
-  });
+dest:"uploads/"
 
 });
 
 
 
-// Speech to text API
+
+
+app.get("/",(req,res)=>{
+
+res.send("Backend running");
+
+});
+
+
+
+
+
+app.get("/test",(req,res)=>{
+
+
+res.json({
+
+message:"Connected successfully"
+
+});
+
+
+});
+
+
+
+
+
+
+
+
 app.post(
+
 "/speech-to-text",
+
 upload.single("audio"),
 
-async (req, res) => {
+
+async(req,res)=>{
 
 
-try {
+let filePath = null;
 
 
-if (!req.file) {
+try{
+
+
+
+console.log(
+"Speech request received"
+);
+
+
+
+if(!req.file){
 
 
 return res.status(400).json({
@@ -84,26 +106,27 @@ error:"No audio file received"
 
 
 
+filePath = req.file.path;
+
+
+
 console.log(
-"Received file:",
+
+"Audio file:",
+
 req.file.originalname
+
 );
 
 
 
-console.log(
-"API KEY EXISTS:",
-!!process.env.SARVAM_API_KEY
-);
 
-
-
-if (!process.env.SARVAM_API_KEY) {
+if(!process.env.SARVAM_API_KEY){
 
 
 return res.status(500).json({
 
-error:"SARVAM API KEY missing"
+error:"SARVAM KEY missing"
 
 });
 
@@ -112,7 +135,10 @@ error:"SARVAM API KEY missing"
 
 
 
+
+
 const formData = new FormData();
+
 
 
 
@@ -120,56 +146,71 @@ formData.append(
 
 "file",
 
-fs.createReadStream(req.file.path)
+fs.createReadStream(filePath)
 
 );
+
 
 
 
 
 console.log(
-"Sending audio to Sarvam..."
+
+"Sending to Sarvam..."
+
 );
+
+
+
 
 
 
 const response = await axios.post(
 
+
 "https://api.sarvam.ai/speech-to-text",
 
+
 formData,
+
 
 {
 
 headers:{
 
+
 ...formData.getHeaders(),
+
 
 "api-subscription-key":
 
 process.env.SARVAM_API_KEY
 
-}
+
+},
+
+
+timeout:30000
+
 
 }
+
 
 );
+
 
 
 
 
 console.log(
-"Sarvam Response:",
+
+"Sarvam response:",
+
 response.data
+
 );
 
 
-
-if(fs.existsSync(req.file.path)){
-
-fs.unlinkSync(req.file.path);
-
-}
 
 
 
@@ -185,20 +226,25 @@ response.data.transcript || ""
 
 
 
+
+
 }
 
 catch(error){
 
 
+
 console.log(
 
-"ERROR:",
+"Sarvam ERROR:",
 
 error.response?.data ||
 
 error.message
 
 );
+
+
 
 
 
@@ -210,7 +256,23 @@ error.response?.data ||
 
 error.message
 
+
 });
+
+
+
+}
+
+finally{
+
+
+if(filePath && fs.existsSync(filePath)){
+
+
+fs.unlinkSync(filePath);
+
+
+}
 
 
 }
@@ -224,12 +286,19 @@ error.message
 
 
 
-// Railway gives PORT automatically
-const PORT = process.env.PORT || 5000;
+
+
+const PORT = 5000;
 
 
 
-app.listen(PORT, () => {
+app.listen(
+
+PORT,
+
+"0.0.0.0",
+
+()=>{
 
 
 console.log(
@@ -239,4 +308,6 @@ console.log(
 );
 
 
-});
+}
+
+);
