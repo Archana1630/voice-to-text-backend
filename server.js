@@ -9,305 +9,179 @@ require("dotenv").config();
 
 const app = express();
 
-
 app.use(cors());
 
 app.use(express.json());
 
 
-// request logger
-app.use((req,res,next)=>{
+// Request Logger
+app.use((req, res, next) => {
 
-console.log(
-"REQUEST:",
-req.method,
-req.url
-);
+  console.log(
+    `\n[${new Date().toLocaleString()}] REQUEST: ${req.method} ${req.url}`
+  );
 
-next();
+  next();
 
 });
 
 
-
+// Upload Folder
 const upload = multer({
+  dest: "uploads/"
+});
 
-dest:"uploads/"
+
+// Home Route
+app.get("/", (req, res) => {
+
+  res.send("Backend running");
 
 });
 
 
+// Test Route
+app.get("/test", (req, res) => {
 
-
-
-app.get("/",(req,res)=>{
-
-res.send("Backend running");
-
-});
-
-
-
-
-
-app.get("/test",(req,res)=>{
-
-
-res.json({
-
-message:"Connected successfully"
+  res.json({
+    message: "Connected successfully"
+  });
 
 });
 
 
-});
-
-
-
-
-
-
-
-
+// Speech To Text Route
 app.post(
+  "/speech-to-text",
+  upload.single("audio"),
 
-"/speech-to-text",
+  async (req, res) => {
 
-upload.single("audio"),
+    let filePath = null;
 
+    try {
 
-async(req,res)=>{
+      console.log(
+        `[${new Date().toLocaleString()}] Speech request received`
+      );
 
+      if (!req.file) {
 
-let filePath = null;
+        return res.status(400).json({
+          error: "No audio file received"
+        });
 
+      }
 
-try{
+      filePath = req.file.path;
 
+      console.log(
+        `Audio File Name: ${req.file.originalname}`
+      );
 
+      console.log(
+        `Stored Path: ${req.file.path}`
+      );
 
-console.log(
-"Speech request received"
-);
+      console.log(
+        `File Size: ${(req.file.size / 1024).toFixed(2)} KB`
+      );
 
+      if (!process.env.SARVAM_API_KEY) {
 
+        return res.status(500).json({
+          error: "SARVAM KEY missing"
+        });
 
-if(!req.file){
+      }
 
+      const formData = new FormData();
 
-return res.status(400).json({
+      formData.append(
+        "file",
+        fs.createReadStream(filePath)
+      );
 
-error:"No audio file received"
+      console.log(
+        `[${new Date().toLocaleString()}] Sending audio to Sarvam API...`
+      );
 
-});
+      const response = await axios.post(
+        "https://api.sarvam.ai/speech-to-text",
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            "api-subscription-key":
+              process.env.SARVAM_API_KEY
+          },
+          timeout: 30000
+        }
+      );
 
+      console.log(
+        `[${new Date().toLocaleString()}] Sarvam Response:`
+      );
 
-}
+      console.log(response.data);
 
+      res.json({
+        transcript:
+          response.data.transcript || ""
+      });
 
+    }
+    catch (error) {
 
-filePath = req.file.path;
+      console.log(
+        `[${new Date().toLocaleString()}] ERROR:`
+      );
 
+      console.log(
+        error.response?.data ||
+        error.message
+      );
 
+      res.status(500).json({
+        error:
+          error.response?.data ||
+          error.message
+      });
 
-console.log(
+    }
+    finally {
 
-"Audio file:",
+      if (
+        filePath &&
+        fs.existsSync(filePath)
+      ) {
 
-req.file.originalname
+        console.log(
+          `Deleting temporary file: ${filePath}`
+        );
 
-);
+        fs.unlinkSync(filePath);
 
+      }
 
+    }
 
-
-if(!process.env.SARVAM_API_KEY){
-
-
-return res.status(500).json({
-
-error:"SARVAM KEY missing"
-
-});
-
-
-}
-
-
-
-
-
-const formData = new FormData();
-
-
-
-
-formData.append(
-
-"file",
-
-fs.createReadStream(filePath)
-
-);
-
-
-
-
-
-console.log(
-
-"Sending to Sarvam..."
-
-);
-
-
-
-
-
-
-const response = await axios.post(
-
-
-"https://api.sarvam.ai/speech-to-text",
-
-
-formData,
-
-
-{
-
-headers:{
-
-
-...formData.getHeaders(),
-
-
-"api-subscription-key":
-
-process.env.SARVAM_API_KEY
-
-
-},
-
-
-timeout:30000
-
-
-}
-
+  }
 
 );
 
 
-
-
-
-console.log(
-
-"Sarvam response:",
-
-response.data
-
-);
-
-
-
-
-
-
-res.json({
-
-transcript:
-
-response.data.transcript || ""
-
-});
-
-
-
-
-
-
-}
-
-catch(error){
-
-
-
-console.log(
-
-"Sarvam ERROR:",
-
-error.response?.data ||
-
-error.message
-
-);
-
-
-
-
-
-res.status(500).json({
-
-error:
-
-error.response?.data ||
-
-error.message
-
-
-});
-
-
-
-}
-
-finally{
-
-
-if(filePath && fs.existsSync(filePath)){
-
-
-fs.unlinkSync(filePath);
-
-
-}
-
-
-}
-
-
-
-}
-
-);
-
-
-
-
-
-
+// Server Port
 const PORT = 5000;
 
-
-
 app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
 
-PORT,
+    console.log(
+      `[${new Date().toLocaleString()}] Server running on port ${PORT}`
+    );
 
-"0.0.0.0",
-
-()=>{
-
-
-console.log(
-
-`Server running on port ${PORT}`
-
-);
-
-
-}
-
+  }
 );
